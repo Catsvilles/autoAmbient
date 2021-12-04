@@ -17,7 +17,7 @@ SynthDef(\bassKick, {
 	arg freq = 50, out = 2;
 	var sig, env, envGen;
 
-	env = Env.new(levels: [0, 1, 0], times: [0.01, 0.2], curve: [-2, 2]);
+	env = Env.new(levels: [0, 1, 0], times: [0.05, 1.95], curve: [-2, 2]);
 	envGen = EnvGen.ar(envelope: env, doneAction: Done.freeSelf);
 
 	sig = SinOsc.ar(freq: freq, mul: 0.5);
@@ -57,26 +57,26 @@ Synth.new(\reverb, [\in, ~pentaBus, \out, ~pentaBus], ~pentaGroup);
 Synth.new(\delay, [\in, ~pentaBus, \out, 0], ~pentaGroup);
 
 Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
-Synth.new(\delay, [\in, ~bassBus, \out, 0], ~bassGroup);
 
-)
-(
-Pbind(
+
+//create a pbind with the shared data
+
+~softBellPattern = Pbind(
 	\instrument, \softBell,
 	\freq, Pxrand([100, 112.5, 125, 150, 167, 175, 200], inf),
-	\dur, Prand([1, 1.5, 2, 4], inf),
+	\dur, Prand([1, 2, 3], inf),
 	\sustain, 4,
 	\gate, 0,
 	\out, ~pentaBus,
 	\group, ~sourceGroup
-).play;
+).play(quant: [2, 0, 0]);
 
-Pbind(
+~bassKickPattern = Pbind(
 	\instrument, \bassKick,
-	\freq, 50,
-	\dur, 1,
+	\freq, Pseq([50, 100], inf),
+	\dur, 4,
 	\out, ~bassBus,
 	\group, ~sourceGroup
-).play;
-)
+).play(quant: [2, 0, 0]);
 
+)
