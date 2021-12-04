@@ -1,0 +1,106 @@
+/*
+
+start with pedal bassline that moves once every 20 seconds or so aong major scale
+
+create bank of combinations of consonant notes above pedal
+
+every 4 seconds, play notes picked randomly from bank of combos relative to bass note
+
+share bass note with uppers (Plambda with Plet/Pget???) to calculate pitches
+
+create arrays of upper note sequences to remember and play at different pitch levels (bass notes)
+
+*/
+
+(
+var figDict = ('m3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
+~figs = [
+	['m3', 'P5'],
+	['M3', 'P5'],
+	['m3', 'm6'],
+	['M3', 'M6'],
+	['P4', 'm6'],
+	['P4', 'M6'],
+];
+~convFigs = ~figs.deepCollect(2, { |i| figDict[i]});
+
+
+SynthDef(\tone, {
+	arg freq = 50, out = 1, gate = 1, amp = 0.5;
+	var sig, env, envGen;
+
+	env = Env([0, 0.5, 0], [0.2, 0.2], releaseNode: 1);
+	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
+
+	sig = SinOsc.ar(freq: freq, mul: 0.5, mul: amp);
+	sig = sig * envGen;
+
+	Out.ar(out, sig!2);
+}).add;
+
+SynthDef(\reverb, {
+	arg in=0, out=0;
+	var sig = In.ar(in, 2);
+	sig = FreeVerb2.ar(sig[0], sig[1], 0.4, 0.8, 0.2);
+	Out.ar(out, sig);
+}).add;
+
+SynthDef(\delay, {
+	arg in=0, out=0;
+
+	var sig = In.ar(in, 2);
+	sig = CombC.ar(sig, 8, 0.33, 8);
+	Out.ar(out, sig);
+}).add;
+)
+
+
+(
+s.newBusAllocators;
+~pentaBus = Bus.audio(numChannels: 2);
+~bassBus = Bus.audio(numChannels: 2);
+
+~sourceGroup = Group.new;
+~pentaGroup = Group.after(~sourceGroup);
+~bassGroup = Group.after(~pentaGroup);
+
+Synth.new(\reverb, [\in, ~pentaBus, \out, ~pentaBus], ~pentaGroup);
+Synth.new(\delay, [\in, ~pentaBus, \out, 0], ~pentaGroup);
+
+Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
+
+~pedalNote = 0;
+
+~pedal = Pbind(
+	\instrument, \tone,
+	\degree, Pfuncn({ ~pedalNote }, inf),
+	\pedal, Plet(\pedal, Pkey(\degree, inf)),
+	\scale, Scale.chromatic,
+	\octave, 3,
+	\dur, 8,
+	\sustain, 8,
+	\out, ~bassBus,
+	\group, ~sourceGroup,
+	\amp, 0.8,
+	\callback, {
+		topEnvironment[\pedalNote] = [0, 2, 4, 5, 7].choose;
+	}
+);
+
+~uppers = Pbind(
+	\instrument, \tone,
+	\figures, Pdup(2, Pfunc({ [~convFigs.choose, ~convFigs.choose] })).flatten(0).trace,
+	\octave, 4,
+	\scale, Scale.chromatic,
+	\degree, Pget(\pedal, 1, inf).trace + Pkey(\figures),
+	\dur, 2,
+	\sustain, 2,
+	\amp, 0.5,
+	\octave, 4,
+	\out, ~bassBus,
+	\group, ~sourceGroup
+);
+
+Plambda(Ppar([~pedal, ~uppers], inf)).play;
+
+)
