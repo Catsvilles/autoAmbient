@@ -14,22 +14,29 @@ create arrays of upper note sequences to remember and play at different pitch le
 
 (
 var figDict = ('m3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
-~figs = [
-	['m3', 'P5'],
-	['M3', 'P5'],
-	['m3', 'm6'],
-	['M3', 'M6'],
-	['P4', 'm6'],
-	['P4', 'M6'],
-];
-~convFigs = ~figs.deepCollect(2, { |i| figDict[i]});
+~figs = (
+	\major: [
+		['M3', 'P5'],
+		['M3', 'M6'],
+		['P4', 'M6'],
+	],
+	\minor: [
+		['m3', 'P5'],
+		['m3', 'm6'],
+		['P4', 'm6'],
+	]
+);
+~convFigs = (
+	\major: ~figs[\major].deepCollect(2, { |i| figDict[i]}),
+	\minor: ~figs[\minor].deepCollect(2, { |i| figDict[i]})
+).postln;
 
 
 SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5;
 	var sig, env, envGen;
 
-	env = Env([0, 0.5, 0], [0.2, 0.2], releaseNode: 1);
+	env = Env([0, 0.5, 0], [0.02, 0.2], releaseNode: 1);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	sig = SinOsc.ar(freq: freq, mul: 0.5, mul: amp);
@@ -89,7 +96,14 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 ~uppers = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(2, Pfunc({ [~convFigs.choose, ~convFigs.choose] })).flatten(0).trace,
+	\figures, Pdup(
+		2,
+		Pfunc({
+			var mode = [\major, \minor].choose;
+			var indices = (0..2).scramble.keep(2);
+			[~convFigs[mode][indices[0]], ~convFigs[mode][indices[1]]];
+		})
+	).flatten(0).trace,
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 1, inf).trace + Pkey(\figures),
@@ -104,3 +118,5 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 Plambda(Ppar([~pedal, ~uppers], inf)).play;
 
 )
+
+f.value(8, 0, 9)
