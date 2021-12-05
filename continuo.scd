@@ -76,22 +76,19 @@ Synth.new(\delay, [\in, ~pentaBus, \out, 0], ~pentaGroup);
 
 Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
-~pedalNote = 0;
-
 ~pedal = Pbind(
 	\instrument, \tone,
-	\degree, Pfuncn({ ~pedalNote }, inf),
-	\pedal, Plet(\pedal, Pkey(\degree, inf)),
+	\degree, Plet(
+		\pedal,
+		Pdup(8, Pfuncn({ [0, 2, 4, 5, 7].choose}, inf))
+	),
 	\scale, Scale.chromatic,
 	\octave, 3,
-	\dur, 8,
-	\sustain, 8,
+	\dur, Pseq([0.999, Pseq([1], inf)], 1),
+	\sustain, 1,
 	\out, ~bassBus,
 	\group, ~sourceGroup,
 	\amp, 0.8,
-	\callback, {
-		topEnvironment[\pedalNote] = [0, 2, 4, 5, 7].choose;
-	}
 );
 
 ~uppers = Pbind(
@@ -103,14 +100,13 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 			var indices = (0..2).scramble.keep(2);
 			[~convFigs[mode][indices[0]], ~convFigs[mode][indices[1]]];
 		})
-	).flatten(0).trace,
+	).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
-	\degree, Pget(\pedal, 1, inf).trace + Pkey(\figures),
+	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 2,
 	\sustain, 2,
 	\amp, 0.5,
-	\octave, 4,
 	\out, ~bassBus,
 	\group, ~sourceGroup
 );
@@ -119,4 +115,3 @@ Plambda(Ppar([~pedal, ~uppers], inf)).play;
 
 )
 
-f.value(8, 0, 9)
