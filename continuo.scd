@@ -36,10 +36,10 @@ SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5;
 	var sig, env, envGen;
 
-	env = Env([0, 0.5, 0], [0.02, 0.2], releaseNode: 1);
+	env = Env([0, 0.5, 0], [0.005, 0.2], releaseNode: 1);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
-	sig = SinOsc.ar(freq: freq, mul: 0.5, mul: amp);
+	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/3)]);
 	sig = sig * envGen;
 
 	Out.ar(out, sig!2);
@@ -76,16 +76,21 @@ Synth.new(\delay, [\in, ~pentaBus, \out, 0], ~pentaGroup);
 
 Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
+~fundamental = Pbind(
+	\instrument, \tone,
+	\degree, Plet(\pedal, Pfuncn({ [0, 2, 4, 5, 7].choose}, inf)),
+	\dur, 8,
+	\amp, 0
+);
+
+
 ~pedal = Pbind(
 	\instrument, \tone,
-	\degree, Plet(
-		\pedal,
-		Pdup(8, Pfuncn({ [0, 2, 4, 5, 7].choose}, inf))
-	),
+	\degree, Pget(\pedal, 0, inf),
 	\scale, Scale.chromatic,
 	\octave, 3,
-	\dur, Pseq([0.999, Pseq([1], inf)], 1),
-	\sustain, 1,
+	\dur, Pseq([0.25, 0.5, 0.25], inf),
+	\sustain, Pkey(\dur),
 	\out, ~bassBus,
 	\group, ~sourceGroup,
 	\amp, 0.8,
@@ -94,7 +99,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 ~uppers = Pbind(
 	\instrument, \tone,
 	\figures, Pdup(
-		2,
+		4,
 		Pfunc({
 			var mode = [\major, \minor].choose;
 			var indices = (0..2).scramble.keep(2);
@@ -104,14 +109,13 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
-	\dur, 2,
-	\sustain, 2,
+	\dur, 1,
+	\sustain, Pkey(\dur),
 	\amp, 0.5,
 	\out, ~bassBus,
 	\group, ~sourceGroup
 );
 
-Plambda(Ppar([~pedal, ~uppers], inf)).play;
+Plambda(Ppar([~fundamental, ~pedal, ~uppers], inf)).play;
 
 )
-
