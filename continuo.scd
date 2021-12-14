@@ -39,7 +39,27 @@ SynthDef(\tone, {
 	env = Env([0, 0.5, 0], [0.005, 0.2], releaseNode: 1);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
-	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/3)]);
+	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/2)]);
+	sig = sig * envGen;
+
+	Out.ar(out, sig!2);
+}).add;
+
+SynthDef(\bassTone, {
+	arg freq = 50, out = 1, gate = 1, amp = 0.5;
+	var sig, env, envGen;
+
+	env = Env(
+		levels: [0, 0.8, 0.4, 0, 0],
+		times: [0.05, 0.05, 0.05, 0.05],
+		curve: [3, -3, 3, -3],
+		releaseNode: 2
+	);
+
+
+	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
+
+	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/7)]);
 	sig = sig * envGen;
 
 	Out.ar(out, sig!2);
@@ -79,43 +99,47 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 ~fundamental = Pbind(
 	\instrument, \tone,
 	\degree, Plet(\pedal, Pfuncn({ [0, 2, 4, 5, 7].choose}, inf)),
-	\dur, 8,
+	\dur, 16,
 	\amp, 0
 );
 
 
 ~pedal = Pbind(
-	\instrument, \tone,
+	\instrument, \bassTone,
 	\degree, Pget(\pedal, 0, inf),
 	\scale, Scale.chromatic,
 	\octave, 3,
-	\dur, Pseq([0.25, 0.5, 0.25], inf),
+	\dur, Pseq([1], inf),
 	\sustain, Pkey(\dur),
 	\out, ~bassBus,
 	\group, ~sourceGroup,
 	\amp, 0.8,
 );
 
-~uppers = Pbind(
+~counterMelody = Pbind(
 	\instrument, \tone,
 	\figures, Pdup(
-		4,
+		2,
 		Pfunc({
 			var mode = [\major, \minor].choose;
 			var indices = (0..2).scramble.keep(2);
-			[~convFigs[mode][indices[0]], ~convFigs[mode][indices[1]]];
+			[
+				~convFigs[mode][indices[0]]!16,
+				~convFigs[mode][indices[1]]!16
+			].flatten(1);
 		})
 	).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
-	\dur, 1,
+	\dur, 0.25,
 	\sustain, Pkey(\dur),
-	\amp, 0.5,
+	\amp, 0.3,
 	\out, ~bassBus,
 	\group, ~sourceGroup
 );
 
-Plambda(Ppar([~fundamental, ~pedal, ~uppers], inf)).play;
 
+
+Plambda(Ppar([~fundamental, ~pedal, ~counterMelody], inf)).play;
 )
