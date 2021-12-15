@@ -13,16 +13,20 @@ create arrays of upper note sequences to remember and play at different pitch le
 */
 
 (
-var figDict = ('m3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
+var figDict = ('P2': 2, 'm3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
 ~figs = (
 	\major: [
+		['P2', 'P5'],
 		['M3', 'P5'],
 		['M3', 'M6'],
+		['P4', 'P5'],
 		['P4', 'M6'],
 	],
 	\minor: [
+		['P2', 'P5'],
 		['m3', 'P5'],
 		['m3', 'm6'],
+		['P4', 'P5'],
 		['P4', 'm6'],
 	]
 );
