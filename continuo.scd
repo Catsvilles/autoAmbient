@@ -124,14 +124,14 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 ~pedal = Pbind(
 	\instrument, \bassTone,
-	\degree, Pget(\pedal, 0, inf),
+	\degree, Pget(\pedal, 0, inf) + Pwrand([0, 12], [0.75, 0.25], inf),
 	\scale, Scale.chromatic,
 	\octave, 3,
-	\dur, Pseq([1], inf),
+	\dur, Pxrand([1, 0.75, 0.5], inf),
 	\sustain, Pkey(\dur),
 	\out, ~bassBus,
 	\group, ~sourceGroup,
-	\amp, 0.8,
+	\amp, 1,
 );
 
 ~counterMelody = Pbind(
