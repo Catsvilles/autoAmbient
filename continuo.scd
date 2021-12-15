@@ -70,6 +70,19 @@ SynthDef(\bassTone, {
 	Out.ar(out, sig!2);
 }).add;
 
+SynthDef(\highHat, {
+	arg out = 1, gate = 1, amp = 0.5;
+	var sig, env, envGen;
+
+	env = Env([0, 0.5, 0], [0.0005, 0.05], releaseNode: 1);
+	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
+
+	sig = Mix.ar([ClipNoise.ar(amp,  0), BrownNoise.ar(amp, 0)]);
+	sig = sig * envGen;
+
+	Out.ar(out, sig!2);
+}).add;
+
 SynthDef(\reverb, {
 	arg in=0, out=0;
 	var sig = In.ar(in, 2);
