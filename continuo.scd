@@ -159,5 +159,18 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 
 
-Plambda(Ppar([~fundamental, ~pedal, ~counterMelody], inf)).play;
+~highHat = Pbind(
+	\instrument, \highHat,
+	\sustain, Pwrand([0.01, 0.025], [0.75, 0.25], inf),
+	\dur, Pdup(
+		Pxrand([4 ,8, 12, 16], inf),
+		Pxrand([1/4 ,1/8, 1/16], inf)
+	).trace,
+	\amp, Pseq([0.2, 0.15, 0.15, 0.15], inf) * Pwrand([1, 0.5], [0.75, 0.25], inf),
+	\out, ~bassBus,
+	\group, ~sourceGroup
+);
+
+Plambda(Ppar([~fundamental, ~pedal, ~counterMelody, ~highHat], inf)).play;
+
 )
