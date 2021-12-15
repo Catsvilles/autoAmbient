@@ -116,7 +116,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 ~fundamental = Pbind(
 	\instrument, \tone,
-	\degree, Plet(\pedal, Pfuncn({ [0, 2, 4, 5, 7].choose}, inf)),
+	\degree, Plet(\pedal, Pfuncn({ (-1..7).choose }, inf)),
 	\dur, 16,
 	\amp, 0
 );
