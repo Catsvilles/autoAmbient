@@ -142,17 +142,17 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 			var mode = [\major, \minor].choose;
 			var indices = (0..2).scramble.keep(2);
 			[
-				~convFigs[mode][indices[0]]!16,
-				~convFigs[mode][indices[1]]!16
+				~convFigs[mode][indices[0]]!1,
+				~convFigs[mode][indices[1]]!1
 			].flatten(1);
 		})
 	).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
-	\dur, 0.25,
+	\dur, 4,
 	\sustain, Pkey(\dur),
-	\amp, 0.3,
+	\amp, 0.4,
 	\out, ~bassBus,
 	\group, ~sourceGroup
 );
