@@ -38,12 +38,13 @@ var figDict = ('P2': 2, 'm3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
 
 SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5;
-	var sig, env, envGen;
+	var sig, env, envGen, vib;
 
-	env = Env([0, 0.5, 0], [0.005, 0.2], releaseNode: 1);
+	env = Env([0, 0.5, 0], [0.1, 0.1], releaseNode: 1);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
-	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/2)]);
+	vib = SinOsc.ar(3, 0, 1.25);
+	sig = Mix.ar([SinOsc.ar(freq: freq + vib, mul: amp), Saw.ar(freq: freq + vib, mul: amp/2.25)]);
 	sig = sig * envGen;
 
 	Out.ar(out, sig!2);
