@@ -55,8 +55,8 @@ SynthDef(\bassTone, {
 	var sig, env, envGen;
 
 	env = Env(
-		levels: [0, 0.8, 0.4, 0, 0],
-		times: [0.05, 0.05, 0.05, 0.05],
+		levels: [0, 0.9, 0.4, 0, 0],
+		times: [0.01, 0.05, 0.05, 0.05],
 		curve: [3, -3, 3, -3],
 		releaseNode: 2
 	);
