@@ -94,7 +94,7 @@ SynthDef(\delay, {
 	arg in=0, out=0;
 
 	var sig = In.ar(in, 2);
-	sig = CombC.ar(sig, 8, 0.33, 8);
+	sig = CombC.ar(sig, 0.5, 0.5, 5);
 	Out.ar(out, sig);
 }).add;
 )
@@ -142,9 +142,9 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 			var mode = [\major, \minor].choose;
 			var indices = (0..2).scramble.keep(2);
 			[
-				~convFigs[mode][indices[0]]!1,
-				~convFigs[mode][indices[1]]!1
-			].flatten(1);
+				~convFigs[mode][indices[0]],
+				~convFigs[mode][indices[1]]
+			].flatten(0);
 		})
 	).flatten(0),
 	\octave, 4,
@@ -157,7 +157,30 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\group, ~sourceGroup
 );
 
-
+~counterMelody2 = Pbind(
+	\instrument, \tone,
+	\figures, Pdup(
+		8,
+		Pfunc({
+			var mode = [\major, \minor].choose;
+			var indices = (0..2).scramble.keep(2);
+			[
+				Rest(),
+				~convFigs[mode][indices[0]][0],
+				~convFigs[mode][indices[1]][1],
+				12,
+			].flatten(1);
+		})
+	).flatten(0),
+	\octave, 4,
+	\scale, Scale.chromatic,
+	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
+	\dur, 0.25,
+	\sustain, Pkey(\dur),
+	\amp, Pseq([0, 0.3, 0.3, 0.3], inf),
+	\out, [0, ~pentaBus],
+	\group, ~pentaGroup
+);
 
 ~highHat = Pbind(
 	\instrument, \highHat,
@@ -165,12 +188,13 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\dur, Pdup(
 		Pxrand([4 ,8, 12, 16], inf),
 		Pxrand([1/4 ,1/8, 1/16], inf)
-	).trace,
+	),
 	\amp, Pseq([0.2, 0.15, 0.15, 0.15], inf) * Pwrand([1, 0.5], [0.75, 0.25], inf),
 	\out, ~bassBus,
 	\group, ~sourceGroup
+
 );
 
-Plambda(Ppar([~fundamental, ~pedal, ~counterMelody, ~highHat], inf)).play;
+Plambda(Ppar([~fundamental, ~pedal, ~counterMelody2, ~highHat], inf)).play;
 
 )
