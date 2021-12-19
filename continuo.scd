@@ -40,7 +40,7 @@ SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5;
 	var sig, env, envGen, vib;
 
-	env = Env([0, 0.5, 0], [0.1, 0.1], releaseNode: 1);
+	env = Env([0, 0.5, 0], [0.01, 0.1], releaseNode: 1);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	vib = SinOsc.ar(3, 0, 1.25);
@@ -94,7 +94,7 @@ SynthDef(\delay, {
 	arg in=0, out=0;
 
 	var sig = In.ar(in, 2);
-	sig = CombC.ar(sig, 0.5, 0.5, 5);
+	sig = CombC.ar(sig, 4, 1/2, 8);
 	Out.ar(out, sig);
 }).add;
 )
@@ -160,15 +160,19 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 ~counterMelody2 = Pbind(
 	\instrument, \tone,
 	\figures, Pdup(
-		8,
+		4,
 		Pfunc({
 			var mode = [\major, \minor].choose;
 			var indices = (0..2).scramble.keep(2);
 			[
-				Rest(),
 				~convFigs[mode][indices[0]][0],
 				~convFigs[mode][indices[1]][1],
 				12,
+				12 + ~convFigs[mode][indices[0]][0],
+				12 + ~convFigs[mode][indices[1]][1],
+				Rest(),
+				Rest(),
+				Rest(),
 			].flatten(1);
 		})
 	).flatten(0),
@@ -177,7 +181,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 0.25,
 	\sustain, Pkey(\dur),
-	\amp, Pseq([0, 0.3, 0.3, 0.3], inf),
+	\amp, Pseq([0.35, 0.35, 0.3, 0.2, 0.2, Rest(), Rest(), Rest()], inf),
 	\out, [0, ~pentaBus],
 	\group, ~pentaGroup
 );
