@@ -33,7 +33,7 @@ var figDict = ('P2': 2, 'm3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
 ~convFigs = (
 	\major: ~figs[\major].deepCollect(2, { |i| figDict[i]}),
 	\minor: ~figs[\minor].deepCollect(2, { |i| figDict[i]})
-).postln;
+);
 
 
 SynthDef(\tone, {
@@ -135,15 +135,15 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 ~blocksFigures = Pfuncn({
 	var mode = [\major, \minor].choose;
-	var indices = (0..2).scramble.keep(2);
+	var indices = (0..4).scramble.keep(2);
 	[
 		[~convFigs[mode][indices[0]], 12],
 		[~convFigs[mode][indices[1]], 12]
-	].flatten2(-1).postln;
-}, 2);
-Pdef(\blocks, Pbind(
+	].flatten2(-1);
+}, 1);
+~blocks = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(1, ~blocksFigures).flatten(0),
+	\figures, Pdup(4, ~blocksFigures).flatten(0).trace,
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures).trace,
@@ -152,23 +152,23 @@ Pdef(\blocks, Pbind(
 	\amp, 0.4,
 	\out, ~bassBus,
 	\group, ~sourceGroup
-));
+);
 
 ~arpsFigures = Pfuncn({
 	var mode = [\major, \minor].choose;
-	var indices = (0..2).scramble.keep(2);
+	var indices = (0..4).scramble.keep(2);
 	[
 		~convFigs[mode][indices[0]][0],
-		~convFigs[mode][indices[1]][1],
+		~convFigs[mode][indices[0]][1],
 		12,
 		12 + ~convFigs[mode][indices[0]][0],
-		12 + ~convFigs[mode][indices[1]][1],
+		12 + ~convFigs[mode][indices[0]][1],
 		Rest()!3
 	].flatten(1);
-}, 2);
-Pdef(\arps, Pbind(
+}, 1).trace;
+~arps = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(4, ~arpsFigures).flatten(0),
+	\figures, Pdup(8, ~arpsFigures).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
@@ -177,13 +177,11 @@ Pdef(\arps, Pbind(
 	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf),
 	\out, [0, ~pentaBus],
 	\group, ~pentaGroup,
-));
+);
 
-~comps = Pspawn(Pbind(
-	\pattern, Pseq([\blocks, \arps], inf),
-	\delta, 16,
-	\method, \par
-));
+~comps = Ptpar([
+	0, ~arps, 16, ~blocks
+], inf);
 
 
 ~highHat = Pbind(
