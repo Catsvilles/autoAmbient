@@ -115,18 +115,17 @@ Synth.new(\delay, [\in, ~pentaBus, \out, 0], ~pentaGroup);
 Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 ~fundamental = Pbind(
-	\instrument, \tone,
+	\event, \rest,
 	\degree, Plet(\pedal, Pfuncn({ (-1..7).choose }, inf)),
 	\dur, 16,
-	\amp, 0
+	\amp, 0,
 );
-
 
 ~pedal = Pbind(
 	\instrument, \bassTone,
-	\degree, Pget(\pedal, 0, inf) + Pwrand([0, 12], [0.75, 0.25], inf),
+	\degree, Pget(\pedal, 0, inf),
 	\scale, Scale.chromatic,
-	\octave, 3,
+	\octave, Pwrand([3, 4], [0.75, 0.25], inf),
 	\dur, Pxrand([1, 0.75, 0.5], inf),
 	\sustain, Pkey(\dur),
 	\out, ~bassBus,
@@ -134,57 +133,58 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\amp, 1,
 );
 
-~counterMelody = Pbind(
+~blocksFigures = Pfuncn({
+	var mode = [\major, \minor].choose;
+	var indices = (0..2).scramble.keep(2);
+	[
+		[~convFigs[mode][indices[0]], 12],
+		[~convFigs[mode][indices[1]], 12]
+	].flatten2(-1).postln;
+}, 2);
+Pdef(\blocks, Pbind(
 	\instrument, \tone,
-	\figures, Pdup(
-		2,
-		Pfunc({
-			var mode = [\major, \minor].choose;
-			var indices = (0..2).scramble.keep(2);
-			[
-				~convFigs[mode][indices[0]],
-				~convFigs[mode][indices[1]]
-			].flatten(0);
-		})
-	).flatten(0),
+	\figures, Pdup(1, ~blocksFigures).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
-	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
+	\degree, Pget(\pedal, 0, inf) + Pkey(\figures).trace,
 	\dur, 4,
 	\sustain, Pkey(\dur),
 	\amp, 0.4,
 	\out, ~bassBus,
 	\group, ~sourceGroup
-);
+));
 
-~counterMelody2 = Pbind(
+~arpsFigures = Pfuncn({
+	var mode = [\major, \minor].choose;
+	var indices = (0..2).scramble.keep(2);
+	[
+		~convFigs[mode][indices[0]][0],
+		~convFigs[mode][indices[1]][1],
+		12,
+		12 + ~convFigs[mode][indices[0]][0],
+		12 + ~convFigs[mode][indices[1]][1],
+		Rest()!3
+	].flatten(1);
+}, 2);
+Pdef(\arps, Pbind(
 	\instrument, \tone,
-	\figures, Pdup(
-		4,
-		Pfunc({
-			var mode = [\major, \minor].choose;
-			var indices = (0..2).scramble.keep(2);
-			[
-				~convFigs[mode][indices[0]][0],
-				~convFigs[mode][indices[1]][1],
-				12,
-				12 + ~convFigs[mode][indices[0]][0],
-				12 + ~convFigs[mode][indices[1]][1],
-				Rest(),
-				Rest(),
-				Rest(),
-			].flatten(1);
-		})
-	).flatten(0),
+	\figures, Pdup(4, ~arpsFigures).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 0.25,
 	\sustain, Pkey(\dur),
-	\amp, Pseq([0.35, 0.35, 0.3, 0.2, 0.2, Rest(), Rest(), Rest()], inf),
+	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf),
 	\out, [0, ~pentaBus],
-	\group, ~pentaGroup
-);
+	\group, ~pentaGroup,
+));
+
+~comps = Pspawn(Pbind(
+	\pattern, Pseq([\blocks, \arps], inf),
+	\delta, 16,
+	\method, \par
+));
+
 
 ~highHat = Pbind(
 	\instrument, \highHat,
@@ -196,9 +196,8 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\amp, Pseq([0.2, 0.15, 0.15, 0.15], inf) * Pwrand([1, 0.5], [0.75, 0.25], inf),
 	\out, ~bassBus,
 	\group, ~sourceGroup
-
 );
 
-Plambda(Ppar([~fundamental, ~pedal, ~counterMelody2, ~highHat], inf)).play;
+Plambda(Ppar([~fundamental, ~pedal, ~comps, ~highHat], inf)).play;
 
 )
