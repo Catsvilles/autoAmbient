@@ -94,7 +94,7 @@ SynthDef(\delay, {
 	arg in=0, out=0;
 
 	var sig = In.ar(in, 2);
-	sig = CombC.ar(sig, 4, 1/2, 8);
+	sig = CombC.ar(sig, 4, 1/2, 6);
 	Out.ar(out, sig);
 }).add;
 )
@@ -143,7 +143,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 }, 1);
 ~blocks = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(4, ~blocksFigures).flatten(0).trace,
+	\figures, Pdup(2, ~blocksFigures).flatten(0).trace,
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures).trace,
@@ -158,17 +158,19 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	var mode = [\major, \minor].choose;
 	var indices = (0..4).scramble.keep(2);
 	[
-		~convFigs[mode][indices[0]][0],
-		~convFigs[mode][indices[0]][1],
+		~convFigs[mode][indices[0]],
 		12,
-		12 + ~convFigs[mode][indices[0]][0],
-		12 + ~convFigs[mode][indices[0]][1],
+		12 + ~convFigs[mode][indices[0]],
+		Rest()!3,
+		~convFigs[mode][indices[1]],
+		12,
+		12 + ~convFigs[mode][indices[1]],
 		Rest()!3
 	].flatten(1);
 }, 1).trace;
 ~arps = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(8, ~arpsFigures).flatten(0),
+	\figures, Pdup(4, ~arpsFigures).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
@@ -180,7 +182,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 );
 
 ~comps = Ptpar([
-	0, ~arps, 16, ~blocks
+	0, ~blocks, 16, ~arps
 ], inf);
 
 
