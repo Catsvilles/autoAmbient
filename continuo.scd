@@ -146,10 +146,10 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 }, 1);
 ~blocks = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(2, ~blocksFigures).flatten(0).trace,
+	\figures, Pdup(2, ~blocksFigures).flatten(0),
 	\octave, 4,
 	\scale, Scale.chromatic,
-	\degree, Pget(\pedal, 0, inf) + Pkey(\figures).trace,
+	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 4,
 	\sustain, Pkey(\dur),
 	\amp, 0.4,
@@ -175,7 +175,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 		12 + ~convFigs[mode][indices[1]],
 		Rest()!3
 	].flatten(1);
-}, 1).trace;
+}, 1);
 ~arps = Pbind(
 	\instrument, \tone,
 	\figures, Pdup(4, ~arpsFigures).flatten(0),
