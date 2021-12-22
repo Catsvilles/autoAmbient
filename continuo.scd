@@ -37,7 +37,7 @@ var figDict = ('P2': 2, 'm3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
 
 
 SynthDef(\tone, {
-	arg freq = 50, out = 1, gate = 1, amp = 0.5;
+	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
 	var sig, env, envGen, vib;
 
 	env = Env([0, 0.5, 0], [0.01, 0.1], releaseNode: 1);
@@ -46,12 +46,13 @@ SynthDef(\tone, {
 	vib = SinOsc.ar(3, 0, 1.25);
 	sig = Mix.ar([SinOsc.ar(freq: freq + vib, mul: amp), Saw.ar(freq: freq + vib, mul: amp/2.25)]);
 	sig = sig * envGen;
+	sig = Pan2.ar(sig, pan);
 
-	Out.ar(out, sig!2);
+	Out.ar(out, sig);
 }).add;
 
 SynthDef(\bassTone, {
-	arg freq = 50, out = 1, gate = 1, amp = 0.5;
+	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
 	var sig, env, envGen;
 
 	env = Env(
@@ -61,17 +62,17 @@ SynthDef(\bassTone, {
 		releaseNode: 2
 	);
 
-
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/7)]);
 	sig = sig * envGen;
+	sig = Pan2.ar(sig, pan);
 
-	Out.ar(out, sig!2);
+	Out.ar(out, sig);
 }).add;
 
 SynthDef(\highHat, {
-	arg out = 1, gate = 1, amp = 0.5;
+	arg out = 1, gate = 1, amp = 0.5, pan=0;
 	var sig, env, envGen;
 
 	env = Env([0, 0.5, 0], [0.0005, 0.05], releaseNode: 1);
@@ -79,8 +80,9 @@ SynthDef(\highHat, {
 
 	sig = Mix.ar([ClipNoise.ar(amp,  0), BrownNoise.ar(amp, 0)]);
 	sig = sig * envGen;
+	sig = Pan2.ar(sig, pan);
 
-	Out.ar(out, sig!2);
+	Out.ar(out, sig);
 }).add;
 
 SynthDef(\reverb, {
