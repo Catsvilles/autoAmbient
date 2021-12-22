@@ -133,6 +133,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\out, ~bassBus,
 	\group, ~sourceGroup,
 	\amp, 1,
+	\pan, Pseq((1..9).normalize(-1,1).mirror1, inf)
 );
 
 ~blocksFigures = Pfuncn({
@@ -153,7 +154,12 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\sustain, Pkey(\dur),
 	\amp, 0.4,
 	\out, ~bassBus,
-	\group, ~sourceGroup
+	\group, ~sourceGroup,
+	\pan, Pfunc({ |e|
+		Array.fill(
+			e[\degree].size,
+			{|i| (i/(e[\degree].size + 1))*2 - 0.5 }
+	) })
 );
 
 ~arpsFigures = Pfuncn({
@@ -181,6 +187,7 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf),
 	\out, [0, ~pentaBus],
 	\group, ~pentaGroup,
+	\pan, Pseq(([0.5, -0.5]!4).flatten.mirror2, inf)
 );
 
 ~comps = Ptpar([
