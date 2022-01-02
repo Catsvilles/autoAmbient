@@ -1,17 +1,3 @@
-/*
-
-start with pedal bassline that moves once every 20 seconds or so aong major scale
-
-create bank of combinations of consonant notes above pedal
-
-every 4 seconds, play notes picked randomly from bank of combos relative to bass note
-
-share bass note with uppers (Plambda with Plet/Pget???) to calculate pitches
-
-create arrays of upper note sequences to remember and play at different pitch levels (bass notes)
-
-*/
-
 (
 var figDict = ('P2': 2, 'm3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
 ~figs = (
