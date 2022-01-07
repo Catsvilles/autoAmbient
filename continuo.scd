@@ -1,19 +1,14 @@
-/*
-
-start with pedal bassline that moves once every 20 seconds or so aong major scale
-
-create bank of combinations of consonant notes above pedal
-
-every 4 seconds, play notes picked randomly from bank of combos relative to bass note
-
-share bass note with uppers (Plambda with Plet/Pget???) to calculate pitches
-
-create arrays of upper note sequences to remember and play at different pitch levels (bass notes)
-
-*/
-
 (
-var figDict = ('P2': 2, 'm3': 3, 'M3': 4, 'P4': 5, 'P5': 7, 'm6': 8, 'M6': 9);
+var figDict = (
+	'P2': 2,
+	'm3': 3,
+	'M3': 4,
+	'P4': 5,
+	'P5': 7,
+	'm6': 8,
+	'M6': 9
+);
+
 ~figs = (
 	\major: [
 		['P2', 'P5'],
@@ -56,7 +51,7 @@ SynthDef(\bassTone, {
 	var sig, env, envGen;
 
 	env = Env(
-		levels: [0, 0.9, 0.4, 0, 0],
+		levels: [0, 0.6, 0.4, 0, 0],
 		times: [0.01, 0.05, 0.05, 0.05],
 		curve: [3, -3, 3, -3],
 		releaseNode: 2
@@ -64,10 +59,31 @@ SynthDef(\bassTone, {
 
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
-	sig = Mix.ar([SinOsc.ar(freq: freq, mul: amp), Saw.ar(freq: freq, mul: amp/7)]);
+	sig = Mix.ar([
+		SinOsc.ar(freq: freq, mul: amp),
+		SinOsc.ar(freq: freq*2, mul: amp/3),
+		Saw.ar(freq: freq, mul: amp/7),
+	]);
 	sig = sig * envGen;
 	sig = Pan2.ar(sig, pan);
 
+	Out.ar(out, sig);
+}).add;
+
+SynthDef(\kick, {
+	arg freq = 500, pan = 0, out = 0, amp = 0.5;
+
+	var freqSweep = Env(
+		[freq/2, freq/2, freq/10, freq/50],
+		[0.01, 0.01, 0.48],
+		[0, 1, -1,]
+	).ar;
+
+	var env = EnvGen.kr(Env([0,1,0], [0.01, 0.49], [1, 6]), doneAction: Done.freeSelf);
+
+	var sig = SinOsc.ar(freqSweep, pi/2);
+	sig = sig * env;
+	sig = Pan2.ar(sig, pan, amp);
 	Out.ar(out, sig);
 }).add;
 
@@ -104,36 +120,45 @@ SynthDef(\delay, {
 
 (
 s.newBusAllocators;
-~pentaBus = Bus.audio(numChannels: 2);
-~bassBus = Bus.audio(numChannels: 2);
+~reverbBus = Bus.audio(numChannels: 2);
+~delayThenReverbBus = Bus.audio(numChannels: 2);
 
 ~sourceGroup = Group.new;
-~pentaGroup = Group.after(~sourceGroup);
-~bassGroup = Group.after(~pentaGroup);
+~effectsGroup = Group.after(~sourceGroup);
 
-Synth.new(\reverb, [\in, ~pentaBus, \out, ~pentaBus], ~pentaGroup);
-Synth.new(\delay, [\in, ~pentaBus, \out, 0], ~pentaGroup);
-
-Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
+~delayThenReverb = Synth.new(\delay, [\in, ~delayThenReverbBus, \out, ~reverbBus], ~effectsGroup, \addToHead);
+~reverb = Synth.new(\reverb, [\in, ~reverbBus, \out, 0], ~effectsGroup, \addToTail);
 
 ~fundamental = Pbind(
 	\event, \rest,
-	\degree, Plet(\pedal, Pfuncn({ (-1..7).choose }, inf)),
-	\dur, 16,
+	\degree, Plet(\pedal, Pfuncn({ (-4..4).choose }, inf)),
+	\dur, 32,
 	\amp, 0,
 );
 
-~pedal = Pbind(
+~bassDurs = Plet(\bassHit, Pxrand([1, 0.75, 0.5], inf));
+
+~bass = Pbind(
 	\instrument, \bassTone,
 	\degree, Pget(\pedal, 0, inf),
 	\scale, Scale.chromatic,
 	\octave, Pwrand([3, 4], [0.75, 0.25], inf),
-	\dur, Pxrand([1, 0.75, 0.5], inf),
+	\dur, Pget(\bassHit, 1, inf),
 	\sustain, Pkey(\dur),
-	\out, ~bassBus,
+	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
-	\amp, 1,
-	\pan, Pseq((1..9).normalize(-1,1).mirror1, inf)
+	\amp, 0.6,
+	\pan, Pseq((1..9).normalize(-0.8,0.8).mirror1, inf)
+);
+
+~kick = Pbind(
+	\instrument, \kick,
+	\degree, Pget(\pedal, 500, inf),
+	\amp, 0.6,
+	\group, ~sourceGroup,
+	\out, [0, ~reverbBus],
+	\dur, 1,
+	\pan, 0
 );
 
 ~blocksFigures = Pfuncn({
@@ -152,8 +177,8 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 4,
 	\sustain, Pkey(\dur),
-	\amp, 0.4,
-	\out, ~bassBus,
+	\amp, 0.3,
+	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
 	\pan, Pfunc({ |e|
 		Array.fill(
@@ -164,17 +189,19 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 
 ~arpsFigures = Pfuncn({
 	var mode = [\major, \minor].choose;
+
 	var indices = (0..4).scramble.keep(2);
-	[
-		~convFigs[mode][indices[0]],
-		12,
-		12 + ~convFigs[mode][indices[0]],
-		Rest()!3,
-		~convFigs[mode][indices[1]],
-		12,
-		12 + ~convFigs[mode][indices[1]],
-		Rest()!3
-	].flatten(1);
+	var figArr1 = ~convFigs[mode][indices[0]];
+	var figArr2 = ~convFigs[mode][indices[1]];
+	var arpArr1 = figArr1++12++(12+figArr1);
+	var arpArr2 = figArr2++12++(12+figArr2);
+
+	(
+		arpArr1++
+		[Rest()!3]++
+		arpArr2++
+		[Rest()!3]
+	).flatten(1);
 }, 1);
 ~arps = Pbind(
 	\instrument, \tone,
@@ -184,14 +211,17 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 0.25,
 	\sustain, Pkey(\dur),
-	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf),
-	\out, [0, ~pentaBus],
-	\group, ~pentaGroup,
+	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf) * 0.8,
+	\out, [0, ~reverbBus, ~delayThenReverbBus],
+	\group, ~sourceGroup,
 	\pan, Pseq(([0.5, -0.5]!4).flatten.mirror2, inf)
 );
 
 ~comps = Ptpar([
-	0, ~blocks, 16, ~arps
+	0,
+	~arps,
+	16,
+	~blocks,
 ], inf);
 
 
@@ -202,12 +232,19 @@ Synth.new(\reverb, [\in, ~bassBus, \out, 0], ~bassGroup);
 		Pxrand([4 ,8, 12, 16], inf),
 		Pxrand([1/4 ,1/8, 1/16], inf)
 	),
-	\amp, Pseq([0.2, 0.15, 0.15, 0.15], inf) * Pwrand([1, 0.5, 0], [0.7, 0.2, 0.1], inf),
-	\out, ~bassBus,
+	\amp, Pseq([0.2, 0.15, 0.15, 0.15], inf) * Pwrand([0.6, 0.3, 0], [0.7, 0.2, 0.1], inf),
+	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
 	\pan, Pseq([0.2, 0.3], inf)
 );
 
-Plambda(Ppar([~fundamental, ~pedal, ~comps, ~highHat], inf)).play;
+Plambda(Ppar([
+	~fundamental,
+	~bassDurs,
+	~kick,
+	~bass,
+	~comps,
+	~highHat
+], inf)).play;
 
 )
