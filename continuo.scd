@@ -1,34 +1,11 @@
 (
-var figDict = (
-	'P2': 2,
-	'm3': 3,
-	'M3': 4,
-	'P4': 5,
-	'P5': 7,
-	'm6': 8,
-	'M6': 9
-);
-
-~figs = (
-	\major: [
-		['P2', 'P5'],
-		['M3', 'P5'],
-		['M3', 'M6'],
-		['P4', 'P5'],
-		['P4', 'M6'],
-	],
-	\minor: [
-		['P2', 'P5'],
-		['m3', 'P5'],
-		['m3', 'm6'],
-		['P4', 'P5'],
-		['P4', 'm6'],
-	]
-);
-~convFigs = (
-	\major: ~figs[\major].deepCollect(2, { |i| figDict[i]}),
-	\minor: ~figs[\minor].deepCollect(2, { |i| figDict[i]})
-);
+~figs = [
+	[1, 4],
+	[2, 4],
+	[2, 5],
+	[3, 4],
+	[3, 5]
+];
 
 TempoClock.default.tempo = 0.85;
 
@@ -132,8 +109,10 @@ s.newBusAllocators;
 
 ~fundamental = Pbind(
 	\event, \rest,
-	\degree, Plet(\pedal, Pfuncn({ (-4..4).choose }, inf)),
-	\dur, (Prand([ 2, 4, [3, 1], [1, 1] ], inf).flatten * 8).trace,
+	\degree, Plet(\pedal, Pfuncn({ (-4..4).choose }, inf)).trace,
+	// \dur, (Prand([ 2, 4, [3, 1], [1, 1] ], inf).flatten * 8).trace,
+	\dur, (Prand([ [1, 1] ], inf).flatten * 8).trace,
+	\scale, Plet(\scale, Prand([Scale.major, Scale.minor], inf), inf),
 	\amp, 0,
 );
 
@@ -141,8 +120,8 @@ s.newBusAllocators;
 
 ~bass = Pbind(
 	\instrument, \bassTone,
-	\degree, Pget(\pedal, 0, inf),
-	\scale, Scale.chromatic,
+	\degree, Pget(\pedal, 0, inf).trace,
+	\scale, Pget(\scale, Scale.major, inf),
 	\octave, Pwrand([3, 4], [0.75, 0.25], inf),
 	\dur, Pget(\bassHit, 1, inf),
 	\sustain, Pkey(\dur),
@@ -163,22 +142,21 @@ s.newBusAllocators;
 );
 
 ~blocksFigures = Pfuncn({
-	var mode = [\major, \minor].choose;
 	var indices = (0..4).scramble.keep(2);
 	[
-		[~convFigs[mode][indices[0]], 12],
-		[~convFigs[mode][indices[1]], 12]
+		[~figs[indices[0]], 7],
+		[~figs[indices[1]], 7]
 	].flatten2(-1);
 }, 1);
 ~blocks = Pbind(
 	\instrument, \tone,
 	\figures, Pdup(2, ~blocksFigures).flatten(0),
-	\octave, [5, 4],
-	\scale, Scale.chromatic,
-	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
+	\octave, [5, 4, 4],
+	\scale, Pget(\mode, Scale.major, inf),
+	\degree, Pget(\pedal, 0, inf) + Pkey(\figures).trace,
 	\dur, 4,
 	\sustain, Pkey(\dur),
-	\amp, [0.2, 0.3],
+	\amp, [0.2, 0.3, 0.2],
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
 	\pan, Pfunc({ |e|
@@ -194,11 +172,11 @@ s.newBusAllocators;
 	var indices = (0..4).scramble.keep(2);
 	var arpOrder = (0..4).scramble;
 
-	var figArr1 = ~convFigs[mode][indices[0]];
-	var figArr2 = ~convFigs[mode][indices[1]];
+	var figArr1 = ~figs[indices[0]];
+	var figArr2 = ~figs[indices[1]];
 
-	var arpArr1 = figArr1++12++(12+figArr1);
-	var arpArr2 = figArr2++12++(12+figArr2);
+	var arpArr1 = figArr1++7++(7+figArr1);
+	var arpArr2 = figArr2++7++(7+figArr2);
 
 	var scrambledArpArr1 = arpOrder.collect({|i| arpArr1[i] });
 	var scrambledArpArr2 = arpOrder.collect({|i| arpArr2[i] });
@@ -212,9 +190,9 @@ s.newBusAllocators;
 }, 1);
 ~arps = Pbind(
 	\instrument, \tone,
-	\figures, Pdup(4, ~arpsFigures).flatten(0),
+	\figures, Pdup(4, ~arpsFigures).flatten(0).trace,
 	\octave, 4,
-	\scale, Scale.chromatic,
+	\scale, Pget(\mode, Scale.major, inf),
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 0.25,
 	\sustain, Pkey(\dur),
