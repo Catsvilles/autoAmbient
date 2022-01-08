@@ -30,6 +30,7 @@ var figDict = (
 	\minor: ~figs[\minor].deepCollect(2, { |i| figDict[i]})
 );
 
+TempoClock.default.tempo = 0.85;
 
 SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
@@ -51,7 +52,7 @@ SynthDef(\bassTone, {
 	var sig, env, envGen;
 
 	env = Env(
-		levels: [0, 0.6, 0.4, 0, 0],
+		levels: [0, 0.8, 0.35, 0, 0],
 		times: [0.01, 0.05, 0.05, 0.05],
 		curve: [3, -3, 3, -3],
 		releaseNode: 2
@@ -132,7 +133,7 @@ s.newBusAllocators;
 ~fundamental = Pbind(
 	\event, \rest,
 	\degree, Plet(\pedal, Pfuncn({ (-4..4).choose }, inf)),
-	\dur, 32,
+	\dur, (Prand([ 2, 4, [3, 1], [1, 1] ], inf).flatten * 8).trace,
 	\amp, 0,
 );
 
@@ -172,12 +173,12 @@ s.newBusAllocators;
 ~blocks = Pbind(
 	\instrument, \tone,
 	\figures, Pdup(2, ~blocksFigures).flatten(0),
-	\octave, 4,
+	\octave, [5, 4],
 	\scale, Scale.chromatic,
 	\degree, Pget(\pedal, 0, inf) + Pkey(\figures),
 	\dur, 4,
 	\sustain, Pkey(\dur),
-	\amp, 0.3,
+	\amp, [0.2, 0.3],
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
 	\pan, Pfunc({ |e|
@@ -191,15 +192,21 @@ s.newBusAllocators;
 	var mode = [\major, \minor].choose;
 
 	var indices = (0..4).scramble.keep(2);
+	var arpOrder = (0..4).scramble;
+
 	var figArr1 = ~convFigs[mode][indices[0]];
 	var figArr2 = ~convFigs[mode][indices[1]];
+
 	var arpArr1 = figArr1++12++(12+figArr1);
 	var arpArr2 = figArr2++12++(12+figArr2);
 
+	var scrambledArpArr1 = arpOrder.collect({|i| arpArr1[i] });
+	var scrambledArpArr2 = arpOrder.collect({|i| arpArr2[i] });
+
 	(
-		arpArr1++
+		scrambledArpArr1++
 		[Rest()!3]++
-		arpArr2++
+		scrambledArpArr2++
 		[Rest()!3]
 	).flatten(1);
 }, 1);
@@ -212,16 +219,16 @@ s.newBusAllocators;
 	\dur, 0.25,
 	\sustain, Pkey(\dur),
 	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf) * 0.8,
-	\out, [0, ~reverbBus, ~delayThenReverbBus],
+	\out, [0, ~delayThenReverbBus],
 	\group, ~sourceGroup,
 	\pan, Pseq(([0.5, -0.5]!4).flatten.mirror2, inf)
 );
 
 ~comps = Ptpar([
 	0,
-	~arps,
-	16,
 	~blocks,
+	16,
+	~arps,
 ], inf);
 
 
