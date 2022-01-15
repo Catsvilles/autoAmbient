@@ -1,15 +1,16 @@
 (
 ~figs = [
-	[1, 4],
-	[2, 4],
-	[2, 5],
-	[3, 4],
-	[3, 5]
-];
+	[3, 5, 7],
+	[3, 5, 6],
+	[3, 4, 6],
+	[2, 4, 6],
+	[2, 5, 6],
+	[4, 5, 7],
+].deepCollect(5, {|i| i - 1});
 
 ~sectionLength = 16;
 
-TempoClock.default.tempo = 0.85;
+TempoClock.default.tempo = 0.5;
 
 SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
@@ -64,6 +65,8 @@ SynthDef(\bassTone, {
 		SinOsc.ar(freq: freq, mul: amp),
 		SinOsc.ar(freq: freq*2, mul: amp/6),
 		SinOsc.ar(freq: freq*3, mul: amp/5),
+		Saw.ar(freq: freq, mul: amp/3),
+		Saw.ar(freq: freq*2, mul: amp/12),
 	]);
 	sig = sig * envGen;
 	sig = Pan2.ar(sig, pan);
@@ -80,7 +83,7 @@ SynthDef(\kick, {
 		[0, 1, -1,]
 	).ar;
 
-	var env = EnvGen.kr(Env([0,0.8,0], [0.01, 0.49], [1, 6]), doneAction: Done.freeSelf);
+	var env = EnvGen.kr(Env([0,0.75,0], [0.01, 0.49], [1, 6]), doneAction: Done.freeSelf);
 
 	var sig = SinOsc.ar(freqSweep, pi/2);
 	sig = sig * env;
@@ -220,37 +223,34 @@ s.newBusAllocators;
 );
 
 ~arpsFigures = Pfuncn({
-	var indices = (0..4).scramble.keep(2);
-	var arpOrder = (0..4).scramble;
+	var indices = (0..(~figs.size - 1)).scramble.keep(2);
 
 	var figArr1 = ~figs[indices[0]];
 	var figArr2 = ~figs[indices[1]];
 
-	var arpArr1 = figArr1++7++(7+figArr1);
-	var arpArr2 = figArr2++7++(7+figArr2);
+	var arpArr1 = (figArr1++(7+figArr1));
+	var arpArr2 = figArr2++(7+figArr2);
 
+	var arpOrder = (0..5).scramble;
 	var scrambledArpArr1 = arpOrder.collect({|i| arpArr1[i] });
 	var scrambledArpArr2 = arpOrder.collect({|i| arpArr2[i] });
 
-	(
-		scrambledArpArr1++
-		// [Rest()!3]++
-		scrambledArpArr1.keep(3)++
-		scrambledArpArr2++
-		scrambledArpArr2.keep(3)
-		// [Rest()!3]
-	).flatten(1);
+	[
+		scrambledArpArr1++scrambledArpArr1.keep(2),
+		scrambledArpArr2++scrambledArpArr2.keep(2)
+	].flatten(0);
 }, 1);
+~durArr = {|dur| dur!7++[(0.25*8)-(dur*7)]};
 ~arps = Pbind(
 	\instrument, \harp,
 	\tuning, Pget(\tuning, Tuning.pythagorean, inf),
-	\figures, Pdup(4, ~arpsFigures).flatten(0),
+	\figures, Pdup(4, ~arpsFigures).flatten(1),
 	\octave, 4,
 	\scale, Pget(\mode, Scale.major, inf),
 	\root, Pget(\pedal, 0, inf),
 	\degree, Pkey(\figures),
-	\dur, 0.25,
-	\sustain, Pkey(\dur),
+	\dur, Pdup(4, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
+	\sustain, 0.5,
 	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf) * 0.8,
 	\out, [0, ~delayThenReverbBus],
 	\group, ~sourceGroup,
@@ -276,12 +276,19 @@ s.newBusAllocators;
 	\pan, Pseq([0.2, 0.3], inf)
 );
 
+~tempo = Pbind(
+	\note, Rest(),
+	\dur, 64,
+	\callback, { TempoClock.default.tempo = [0.85].choose; }
+);
+
 Plambda(Ppar([
 	~fundamental,
 	~bassDurs,
 	~kick,
 	~bass,
 	~comps,
-	~highHat
+	~highHat,
+	~tempo
 ], inf)).play;
 )
