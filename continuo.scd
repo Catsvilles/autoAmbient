@@ -62,6 +62,8 @@ SynthDef(\bassTone, {
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	sig = Mix.ar([
+		SinOsc.ar(freq: freq/4, mul: amp),
+		SinOsc.ar(freq: freq/2, mul: amp),
 		SinOsc.ar(freq: freq, mul: amp),
 		SinOsc.ar(freq: freq*2, mul: amp/6),
 		SinOsc.ar(freq: freq*3, mul: amp/5),
@@ -162,7 +164,7 @@ s.newBusAllocators;
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
 	\amp, 0.6,
-	\pan, -0.2
+	\pan, 0
 );
 
 ~kick = Pbind(
