@@ -51,7 +51,7 @@ SynthDef(\bassTone, {
 	var sig, env, envGen, lagFreq;
 
 	env = Env(
-		levels: [0, 0.9, 0.3, 0],
+		levels: [0, 0.8, 0.3, 0],
 		times: [0.005, 0.05, 0.44],
 		curve: [3, -3, 0],
 		releaseNode: 2
@@ -161,7 +161,7 @@ s.newBusAllocators;
 	\sustain, Pkey(\dur) - 0.25,
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
-	\amp, 0.6,
+	\amp, 0.55,
 	\pan, 0
 );
 
