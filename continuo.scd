@@ -10,8 +10,6 @@
 
 ~sectionLength = 16;
 
-TempoClock.default.tempo = 0.5;
-
 SynthDef(\tone, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
 	var sig, env, envGen, vib, lagFreq;
@@ -281,7 +279,8 @@ s.newBusAllocators;
 ~tempo = Pbind(
 	\note, Rest(),
 	\dur, 64,
-	\callback, { TempoClock.default.tempo = [0.85].choose; }
+	\tempo, Prand([0.5, 0.85, 1], inf),
+	\callback, { |e| TempoClock.default.tempo = e.tempo; }
 );
 
 Plambda(Ppar([
