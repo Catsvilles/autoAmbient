@@ -60,13 +60,10 @@ SynthDef(\bassTone, {
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	sig = Mix.ar([
-		SinOsc.ar(freq: freq/4, mul: amp),
-		SinOsc.ar(freq: freq/2, mul: amp),
+		SinOsc.ar(freq: freq/4, mul: amp/2),
+		SinOsc.ar(freq: freq/2, mul: amp/2),
 		SinOsc.ar(freq: freq, mul: amp),
-		SinOsc.ar(freq: freq*2, mul: amp/6),
-		SinOsc.ar(freq: freq*3, mul: amp/5),
-		Saw.ar(freq: freq, mul: amp/3),
-		Saw.ar(freq: freq*2, mul: amp/12),
+		SinOsc.ar(freq: freq*2, mul: amp/3),
 	]);
 	sig = sig * envGen;
 	sig = Pan2.ar(sig, pan);
@@ -161,7 +158,7 @@ s.newBusAllocators;
 	\sustain, Pkey(\dur) - 0.25,
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
-	\amp, 0.55,
+	\amp, 0.7,
 	\pan, 0
 );
 
@@ -249,12 +246,12 @@ s.newBusAllocators;
 	\scale, Pget(\mode, Scale.major, inf),
 	\root, Pget(\pedal, 0, inf),
 	\degree, Pkey(\figures),
-	\dur, Pdup(4, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
+	\dur, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
 	\sustain, 0.5,
 	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf) * 0.8,
 	\out, [0, ~delayThenReverbBus],
 	\group, ~sourceGroup,
-	\pan, Pseq(([0.5, -0.5]!4).flatten.mirror2, inf)
+	\pan, Pseq(([0.75, -0.75]!4).flatten.mirror2, inf)
 );
 
 ~comps = Ptpar([
@@ -278,8 +275,8 @@ s.newBusAllocators;
 
 ~tempo = Pbind(
 	\note, Rest(),
-	\dur, 64,
-	\tempo, Prand([0.5, 0.85, 1], inf),
+	\dur, Prand([64, 128, 256], inf),
+	\tempo, Pxrand([0.7, 0.85, 1], inf),
 	\callback, { |e| TempoClock.default.tempo = e.tempo; }
 );
 
