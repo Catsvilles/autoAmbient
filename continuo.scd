@@ -213,11 +213,22 @@ s.newBusAllocators;
 	\pan, Pseq([0.2, 0.3], inf)
 );
 
+~changeTempo = {
+	arg newTempo = 1, changeDur = 1, stepCount = 10;
+	var delta = newTempo - TempoClock.default.tempo;
+	var deltaSlice = delta/stepCount;
+	var stepper = Routine.new({
+		stepCount.do({
+			TempoClock.default.tempo = TempoClock.default.tempo + deltaSlice;
+			(changeDur/stepCount).wait;
+		});
+	}).play;
+};
 ~tempo = Pbind(
-	\note, Rest(),
+	\amp, Rest(),
 	\dur, Prand([64, 128, 256], inf),
-	\tempo, Pxrand([0.7, 0.85, 1], inf),
-	\callback, { |e| TempoClock.default.tempo = e.tempo; }
+	\tempoNum, Pxrand([0.7, 0.85, 1], inf),
+	\callback, { |e| topEnvironment[\changeTempo].value(e.tempoNum, 2, 20) }
 );
 
 Plambda(Ppar([
