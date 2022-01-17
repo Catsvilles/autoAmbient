@@ -159,47 +159,6 @@ s.newBusAllocators;
 	\pan, -0.2
 );
 
-~blocksFigures = Pfuncn({
-	var indices = (0..4).scramble.keep(2);
-	[
-		[~figs[indices[0]], 7],
-		[~figs[indices[1]], 7]
-	].flatten2(-1);
-}, 1);
-
-~blocks = Pmono(\tone,
-	\tuning, Pget(\tuning, Tuning.pythagorean, inf),
-	\root, Pget(\pedal, 0, inf),
-	\octave, [5, 4, 4],
-	\degree, Pdup(2, ~blocksFigures).flatten(0),
-	\scale, Pget(\mode, Scale.minor, inf),
-	\dur, 4,
-	\sustain, Pkey(\dur),
-	\amp, [0.2, 0.3, 0.3],
-	\out, [0, ~reverbBus],
-	\group, ~sourceGroup,
-	\pan, Pfunc({ |e|
-		Array.fill(
-			e[\degree].size,
-			{|i| (i/(e[\degree].size + 1))*2 - 0.5 }
-	) })
-);
-
-~walkMelody = Pfindur(
-	~sectionLength,
-	Pmono(
-		\tone,
-		\tuning, Plet(\tuning, Tuning.pythagorean, inf),
-		\root, Pget(\pedal, 0, inf),
-		\octave, 5,
-		\degree, Pwalk((0..15), Prand([-2, -1, 1, 2], inf), -1, (0..12).choose),
-		\dur, Prand([4, 0.5], inf),
-		\sustain, Pkey(\dur),
-		\lag, 0.05,
-		\amp, 0.3
-	),
-);
-
 ~arpsFigures = Pfuncn({
 	var indices = (0..(~figs.size - 1)).scramble.keep(2);
 
