@@ -33,12 +33,11 @@ SynthDef(\bassTone, {
 
 	env = Env(
 		levels: [0, 0.8, 0.3, 0],
-		times: [0.005, 0.05, 0.44],
-		curve: [3, -3, 0],
-		releaseNode: 2
+		times: [0.005, 0.05, 0.94],
+		curve: [3, -3, 0]
 	);
 
-	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
+	envGen = EnvGen.ar(envelope: env, gate: 1, doneAction: Done.freeSelf);
 
 	sig = Mix.ar([
 		SinOsc.ar(freq: freq/4, mul: amp/2),
@@ -135,8 +134,8 @@ s.newBusAllocators;
 	\tuning, Pget(\tuning, Tuning.pythagorean, inf),
 	\octave, Pwrand([3, 4], [0.75, 0.25], inf),
 	\degree, 0,
-	\dur, Prand([1, 0.75, 0.5], inf),
-	\sustain, Pkey(\dur) - 0.25,
+	\delta, Prand([1, 0.75, 0.5], inf),
+	\sustain, 0,
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
 	\amp, 0.7,
@@ -186,8 +185,7 @@ s.newBusAllocators;
 	\scale, Pget(\mode, Scale.major, inf),
 	\root, Pget(\pedal, 0, inf),
 	\degree, Pkey(\figures),
-	\dur, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
-	\sustain, 0.5,
+	\delta, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
 	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf) * 0.8,
 	\out, [0, ~delayThenReverbBus],
 	\group, ~sourceGroup,
