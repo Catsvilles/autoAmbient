@@ -10,25 +10,6 @@
 
 ~sectionLength = 16;
 
-SynthDef(\tone, {
-	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
-	var sig, env, envGen, vib, lagFreq;
-
-	env = Env([0, 0.5, 0], [0.01, 0.1], releaseNode: 1);
-	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
-
-	vib = SinOsc.ar(3, 0, 1.25);
-	lagFreq = Lag.kr(freq, 0.1);
-	sig = Mix.ar([
-		SinOsc.ar(freq: lagFreq + vib, mul: amp),
-		Saw.ar(freq: lagFreq + vib, mul: amp/3)
-	]);
-	sig = sig * envGen;
-	sig = Pan2.ar(sig, pan);
-
-	Out.ar(out, sig);
-}).add;
-
 SynthDef(\harp, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
 	var sig, env, envGen, vib;
