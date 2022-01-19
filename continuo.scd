@@ -123,7 +123,7 @@ s.newBusAllocators;
 ~globals = Pbind(
 	\event, \rest,
 	\scale, Plet(\mode, Prand(~scaleOptions, inf), inf),
-	\root, Plet(\pedal, Pxrand((-5..5), inf)).trace,
+	\root, Plet(\pedal, Pxrand((-5..5), inf)),
 	\tuning, Plet(\tuning, Tuning.pythagorean, inf),
 	\arpOrder, Plet(\arpOrder, Pfunc({(0..5).scramble}), inf),
 	\dur, Prand([ 2, 4, [3, 1], [1, 1] ], inf).flatten * 8,
@@ -191,7 +191,7 @@ s.newBusAllocators;
 	\scale, Pget(\mode, Scale.major, inf),
 	\root, Pget(\pedal, 0, inf),
 	\degree, Pkey(\figures),
-	\delta, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0).trace,
+	\delta, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
 	\amp, 0.2,
 	\out, [0, ~delayThenReverbBus],
 	\group, ~sourceGroup,
