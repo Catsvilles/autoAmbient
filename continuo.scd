@@ -14,13 +14,14 @@ SynthDef(\harp, {
 	arg freq = 50, out = 1, gate = 1, amp = 0.5, pan=0;
 	var sig, env, envGen, vib;
 
-	env = Env([0, 0.7, 0.35, 0], [0.01, 0.1, 0.2], releaseNode: 2);
+	env = Env([0, 0.5, 0.2, 0], [0.01, 0.1, 0.2], releaseNode: 2);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	vib = SinOsc.ar(3, 0, 1.25);
 	sig = Mix.ar([
 		SinOsc.ar(freq: freq + vib, mul: amp),
-		Pulse.ar(freq: freq + vib, mul: amp/3)]);
+		Pulse.ar(freq: freq + vib, mul: amp*Line.kr(1/4, 1/12, 0.1))
+	]);
 	sig = sig * envGen;
 	sig = Pan2.ar(sig, pan);
 
@@ -32,18 +33,18 @@ SynthDef(\bassTone, {
 	var sig, env, envGen, lagFreq;
 
 	env = Env(
-		levels: [0, 0.8, 0.3, 0],
-		times: [0.005, 0.05, 0.94],
+		levels: [0, 0.5, 0.2, 0],
+		times: [0.0075, 0.05, 0.94],
 		curve: [3, -3, 0]
 	);
 
 	envGen = EnvGen.ar(envelope: env, gate: 1, doneAction: Done.freeSelf);
 
 	sig = Mix.ar([
-		SinOsc.ar(freq: freq/4, mul: amp/2),
-		SinOsc.ar(freq: freq/2, mul: amp/2),
+		SinOsc.ar(freq: freq/4, mul: amp*Line.kr(1/2, 1, 0.5)),
+		SinOsc.ar(freq: freq/2, mul: amp*Line.kr(1/2, 1, 0.5)),
 		SinOsc.ar(freq: freq, mul: amp),
-		SinOsc.ar(freq: freq*2, mul: amp/3),
+		SinOsc.ar(freq: freq*2, mul: amp*Line.kr(1/3, 1/12, 0.5)),
 	]);
 	sig = sig * envGen;
 	sig = Pan2.ar(sig, pan);
@@ -60,7 +61,7 @@ SynthDef(\kick, {
 		[0, 1, -1,]
 	).ar;
 
-	var env = EnvGen.kr(Env([0,0.75,0], [0.01, 0.49], [1, 6]), doneAction: Done.freeSelf);
+	var env = EnvGen.kr(Env([0,0.4,0], [0.01, 0.49], [1, 6]), doneAction: Done.freeSelf);
 
 	var sig = SinOsc.ar(freqSweep, pi/2);
 	sig = sig * env;
@@ -85,7 +86,7 @@ SynthDef(\highHat, {
 SynthDef(\reverb, {
 	arg in=0, out=0;
 	var sig = In.ar(in, 2);
-	sig = FreeVerb2.ar(sig[0], sig[1], 0.4, 0.8, 0.2);
+	sig = FreeVerb2.ar(sig[0], sig[1], 0.4, 0.6, 0.2);
 	Out.ar(out, sig);
 }).add;
 
@@ -93,7 +94,7 @@ SynthDef(\delay, {
 	arg in=0, out=0;
 
 	var sig = In.ar(in, 2);
-	sig = CombC.ar(sig, 4, 1/2, 6);
+	sig = CombC.ar(sig, 3.5, 1/2, 5);
 	Out.ar(out, sig);
 }).add;
 )
