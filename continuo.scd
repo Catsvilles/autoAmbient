@@ -119,11 +119,13 @@ s.newBusAllocators;
 	Scale.minor
 ];
 
-~fundamental = Pbind(
+
+~globals = Pbind(
 	\event, \rest,
 	\scale, Plet(\mode, Prand(~scaleOptions, inf), inf),
 	\root, Plet(\pedal, Pxrand((-5..5), inf)).trace,
 	\tuning, Plet(\tuning, Tuning.pythagorean, inf),
+	\arpOrder, Plet(\arpOrder, Pfunc({(0..5).scramble}), inf),
 	\dur, Prand([ 2, 4, [3, 1], [1, 1] ], inf).flatten * 8,
 	\amp, 0,
 );
@@ -159,7 +161,8 @@ s.newBusAllocators;
 	\pan, -0.2
 );
 
-~arpsFigures = Pfuncn({
+~arpsFigures = Pfuncn({ |e|
+
 	var indices = (0..(~figs.size - 1)).scramble.keep(2);
 
 	var figArr1 = ~figs[indices[0]];
@@ -168,7 +171,7 @@ s.newBusAllocators;
 	var arpArr1 = (figArr1++(7+figArr1));
 	var arpArr2 = figArr2++(7+figArr2);
 
-	var arpOrder = (0..5).scramble;
+	var arpOrder = e[\arpOrder];
 	var scrambledArpArr1 = arpOrder.collect({|i| arpArr1[i] });
 	var scrambledArpArr2 = arpOrder.collect({|i| arpArr2[i] });
 
@@ -177,17 +180,19 @@ s.newBusAllocators;
 		scrambledArpArr2++scrambledArpArr2.keep(2)
 	].flatten(0);
 }, 1);
+
 ~durArr = {|dur| dur!7++[(0.25*8)-(dur*7)]};
 ~arps = Pbind(
 	\instrument, \harp,
 	\tuning, Pget(\tuning, Tuning.pythagorean, inf),
+	\arpOrder, Pget(\arpOrder, (0..5), inf),
 	\figures, Pdup(4, ~arpsFigures).flatten(1),
 	\octave, 4,
 	\scale, Pget(\mode, Scale.major, inf),
 	\root, Pget(\pedal, 0, inf),
 	\degree, Pkey(\figures),
-	\delta, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0),
-	\amp, Pseq([0.35, 0.35, 0.3, 0.2!5].flatten(1), inf) * 0.8,
+	\delta, Pdup(16, (Prand([0.25,0.125,0.025].collect(~durArr), inf))).flatten(0).trace,
+	\amp, 0.2,
 	\out, [0, ~delayThenReverbBus],
 	\group, ~sourceGroup,
 	\pan, Pseq(([0.75, -0.75]!4).flatten.mirror2, inf)
@@ -234,12 +239,12 @@ s.newBusAllocators;
 ~tempo = Pbind(
 	\amp, Rest(),
 	\dur, Prand([64, 128, 256], inf),
-	\tempoNum, Pxrand([0.7, 0.85, 1], inf),
+	\tempoNum, Pxrand([0.7, 0.85, 1], inf), //0.2??????
 	\callback, { |e| topEnvironment[\changeTempo].value(e.tempoNum, 2, 20) }
 );
 
 Plambda(Ppar([
-	~fundamental,
+	~globals,
 	~bassDurs,
 	~kick,
 	~bass,
