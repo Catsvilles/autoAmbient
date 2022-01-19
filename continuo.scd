@@ -70,14 +70,14 @@ SynthDef(\kick, {
 }).add;
 
 SynthDef(\highHat, {
-	arg out = 1, gate = 1, amp = 0.5, pan=0;
+	arg out = 1, gate = 1, amp = 0.5, pan=0, freq=10000;
 	var sig, env, envGen;
 
-	env = Env([0, 0.5, 0], [0.0005, 0.05], releaseNode: 1);
+	env = Env([0, 0.4, 0], [0.0005, 0.05], releaseNode: 1);
 	envGen = EnvGen.ar(envelope: env, gate: gate, doneAction: Done.freeSelf);
 
 	sig = Mix.ar([ClipNoise.ar(amp,  0), BrownNoise.ar(amp, 0)]);
-	sig = sig * envGen;
+	sig = BPF.ar(sig, freq, 0.75) * envGen;
 	sig = Pan2.ar(sig, pan);
 
 	Out.ar(out, sig);
@@ -205,6 +205,14 @@ s.newBusAllocators;
 	\dur, Pdup(
 		Pxrand([4 ,8, 12, 16], inf),
 		Pxrand([1/4 ,1/8, 1/16], inf)
+	),
+	\freq, Pwrand(
+		[
+			10000 * (0.9**Pseq((0..7), 1)),
+			Pseq(10000!4, 1)
+		],
+		[0.25, 0.75],
+		inf
 	),
 	\amp, Pseq([0.2, 0.15, 0.15, 0.15], inf) * Pwrand([0.6, 0.3, 0], [0.7, 0.2, 0.1], inf),
 	\out, [0, ~reverbBus],
