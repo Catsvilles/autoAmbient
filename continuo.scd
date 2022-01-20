@@ -83,6 +83,19 @@ SynthDef(\highHat, {
 	Out.ar(out, sig);
 }).add;
 
+SynthDef("snare", {arg out = 0, amp = 0.1, sinfreq = 175, att = 0.01, rel = 0.2, ffreq = 1750, pan = 0;
+	var env, snd1, snd2, sum;
+	env = Env.perc(att, rel, amp).kr(doneAction: 2);
+	snd1 = HPF.ar(
+		in: WhiteNoise.ar,
+		freq: ffreq,
+		mul: env
+	);
+	snd2 = SinOsc.ar(freq: sinfreq, mul: env);
+	sum = snd1 + snd2;
+	Out.ar(out, Pan2.ar(sum, pan));
+}).add;
+
 SynthDef(\reverb, {
 	arg in=0, out=0;
 	var sig = In.ar(in, 2);
@@ -243,6 +256,13 @@ s.newBusAllocators;
 	\callback, { |e| topEnvironment[\changeTempo].value(e.tempoNum, 2, 20) }
 );
 
+~snare = Pbind(
+	\instrument, \snare,
+	\dur, Prand([1/4, 3/8, 1/2], inf),
+	\sustain, 0,
+	\amp, Pwrand([0.1, Rest()], [0.8, 0.2], inf)
+);
+
 Plambda(Ppar([
 	~globals,
 	~bassDurs,
@@ -250,6 +270,7 @@ Plambda(Ppar([
 	~bass,
 	~comps,
 	~highHat,
-	~tempo
+	~tempo,
+	~snare
 ], inf)).play;
 )
