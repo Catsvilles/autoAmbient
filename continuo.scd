@@ -8,6 +8,71 @@
 	[4, 5, 7],
 ].deepCollect(5, {|i| i - 1});
 
+// (12 - [2, 4, 8]), (24 - [3, 9]) complex crumbling
+~crumbleNum = { arg num = 16, crumbles = [0.25, 0.5, 0.75, 1];
+	var
+	result = [],
+	localNum = num,
+	orderedCrumbles = Array.newFrom(crumbles).sort,
+	minCrumble = orderedCrumbles[0],
+	maxCrumble = orderedCrumbles[orderedCrumbles.size - 1],
+	newCrumble,
+	validationArr = Array.newFrom(orderedCrumbles)++num;
+
+	validationArr.do({ |num|
+		var mult = num/minCrumble;
+		mult.postln;
+		if (mult - mult.floor != 0,
+			{
+				Error(
+					"the given number and its crumbles\n"
+					"must all be whole-number multiples\n"
+					"of the smallest crumble";
+				).throw
+			}
+		)
+	});
+
+	while (
+		{ localNum > maxCrumble },
+		{
+			newCrumble = crumbles.choose;
+			result = result++newCrumble;
+			localNum = localNum - newCrumble;
+		}
+	);
+
+	if (orderedCrumbles.find([localNum]) !== nil or: {minCrumble >= localNum},
+		{ result = result++localNum },
+		{ result = result++~crumbleNum.value(
+			localNum,
+			orderedCrumbles.removeAllSuchThat({ |i| i <= localNum }))
+		}
+	);
+	result;
+};
+
+~noteValues = [1/4 ,1/8, 1/16];
+~repeats = [4 ,8, 12, 16];
+~allTuples = [~noteValues, ~repeats].allTuples;
+~allTupleDurs = ~allTuples.collect({ |i| i[0] * i[1] });
+
+~getHighHatMeasure = {
+	var chunkedHighHatMeasure, highHatMeasure;
+	var crumbledMeasure = ~crumbleNum.value(16, ~allTupleDurs);
+	var tupledMeasure = [];
+	crumbledMeasure.do({ |crumb|
+		var matchingTuples = [];
+
+		~allTupleDurs.do({ |dur, i|
+			if (crumb === dur, { matchingTuples = matchingTuples.add(~allTuples[i]) })
+		});
+		tupledMeasure = tupledMeasure.add(matchingTuples.choose);
+	});
+	chunkedHighHatMeasure = tupledMeasure.collect({ |tup| (tup[0]!tup[1]) });
+	highHatMeasure = chunkedHighHatMeasure.flatten;
+};
+
 ~sectionLength = 16;
 
 SynthDef(\harp, {
@@ -150,7 +215,7 @@ s.newBusAllocators;
 	\tuning, Pget(\tuning, Tuning.pythagorean, inf),
 	\octave, Pwrand([3, 4], [0.75, 0.25], inf),
 	\degree, 0,
-	\delta, Prand([1, 0.75, 0.5], inf),
+	\delta, Pdup(4, Pfunc({ ~crumbleNum.value })).flatten,
 	\sustain, 0,
 	\out, [0, ~reverbBus],
 	\group, ~sourceGroup,
@@ -158,14 +223,18 @@ s.newBusAllocators;
 	\pan, 0
 );
 
+~getKickMeasure = Pfunc({
+	var getKickBeat = {[
+		[\note, Rest()].wchoose([0.9, 0.1]),
+		[\note, Rest()].wchoose([0.1, 0.9]),
+		[\note, Rest()].wchoose([0.2, 0.8]),
+		[\note, Rest()].wchoose([0.2, 0.8]),
+	]};
+	Array.fill(4, getKickBeat).flatten(1);
+});
 ~kick = Pbind(
 	\instrument, \kick,
-	\type, Pseq([
-		Pwrand([\note, Rest()], [0.9, 0.1]),
-		Pwrand([\note, Rest()], [0.1, 0.9]),
-		Pwrand([\note, Rest()], [0.2, 0.8]),
-		Pwrand([\note, Rest()], [0.2, 0.8]),
-	], inf),
+	\type, Pdup(4, ~getKickMeasure).flatten(1),
 	\freq, 300,
 	\amp, 0.6,
 	\group, ~sourceGroup,
@@ -216,14 +285,10 @@ s.newBusAllocators;
 	~arps,
 ], inf);
 
-
 ~highHat = Pbind(
 	\instrument, \highHat,
 	\sustain, Pwrand([0.01, 0.04], [0.75, 0.25], inf),
-	\dur, Pdup(
-		Pxrand([4 ,8, 12, 16], inf),
-		Pxrand([1/4 ,1/8, 1/16], inf)
-	),
+	\dur, Pdup(4, Pfunc(~getHighHatMeasure)).flatten,
 	\freq, Pwrand(
 		[
 			10000 * (0.9**Pseq((0..7), 1)),
@@ -258,9 +323,11 @@ s.newBusAllocators;
 
 ~snare = Pbind(
 	\instrument, \snare,
-	\dur, Prand([1/4, 3/8, 1/2], inf),
+	\dur, Pdup(4, (Pfunc({
+		~crumbleNum.value(crumbles: [1/8, 1/4, 3/8, 1/2, 5/8, 3/4])
+	}))).flatten,
 	\sustain, 0,
-	\amp, Pwrand([0.1, Rest()], [0.8, 0.2], inf)
+	\amp, 0.1
 );
 
 Plambda(Ppar([
