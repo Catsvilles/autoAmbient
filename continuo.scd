@@ -1,4 +1,8 @@
 (
+(thisProcess.nowExecutingPath.dirname+/+"crumbleNum.scd").load;
+)
+
+(
 ~figs = [
 	[3, 5, 7],
 	[3, 5, 6],
@@ -7,50 +11,6 @@
 	[2, 5, 6],
 	[4, 5, 7],
 ].deepCollect(5, {|i| i - 1});
-
-// (12 - [2, 4, 8]), (24 - [3, 9]) complex crumbling
-~crumbleNum = { arg num = 16, crumbles = [0.25, 0.5, 0.75, 1];
-	var
-	result = [],
-	localNum = num,
-	orderedCrumbles = Array.newFrom(crumbles).sort,
-	minCrumble = orderedCrumbles[0],
-	maxCrumble = orderedCrumbles[orderedCrumbles.size - 1],
-	newCrumble,
-	validationArr = Array.newFrom(orderedCrumbles)++num;
-
-	validationArr.do({ |num|
-		var mult = num/minCrumble;
-		mult.postln;
-		if (mult - mult.floor != 0,
-			{
-				Error(
-					"the given number and its crumbles\n"
-					"must all be whole-number multiples\n"
-					"of the smallest crumble";
-				).throw
-			}
-		)
-	});
-
-	while (
-		{ localNum > maxCrumble },
-		{
-			newCrumble = crumbles.choose;
-			result = result++newCrumble;
-			localNum = localNum - newCrumble;
-		}
-	);
-
-	if (orderedCrumbles.find([localNum]) !== nil or: {minCrumble >= localNum},
-		{ result = result++localNum },
-		{ result = result++~crumbleNum.value(
-			localNum,
-			orderedCrumbles.removeAllSuchThat({ |i| i <= localNum }))
-		}
-	);
-	result;
-};
 
 ~noteValues = [1/4 ,1/8, 1/16];
 ~repeats = [4 ,8, 12, 16];
