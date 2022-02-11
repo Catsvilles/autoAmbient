@@ -282,10 +282,15 @@ s.newBusAllocators;
 );
 
 ~snare = Pbind(
-	\instrument, \snare,
-	\dur, Pdup(4, (Pfunc({
-		~crumbleNum.value(crumbles: [1/8, 1/4, 3/8, 1/2, 5/8, 3/4])
+	\input, Pdup(4, (Pfunc({
+		var durs = ~crumbleNum.value(crumbles: [1/8, 1/4, 3/8, 1/2, 5/8, 3/4]);
+		var types = Array.fill(durs.size, { [\note, Rest()].wchoose([0.8, 0.2]) });
+
+		durs.collect({ |dur, i| (dur: dur, type: types[i] ) });
 	}))).flatten,
+	\type, Pkey(\input).collect({ |d| d[\type] }),
+	\instrument, \snare,
+	\dur, Pkey(\input).collect({ |d| d[\dur] }),
 	\sustain, 0,
 	\amp, 0.1
 );
